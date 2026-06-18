@@ -8,6 +8,7 @@ client = OpenAI(api_key="OPENAI_API_KEY")
 
 @app.route('/webhook', methods=['POST'])
 def handle_voice():
+    print("קיבלתי קריאה מימות המשיח!")
     # כאן יגיע האודיו מימות המשיח
     user_text = "שלום, איך אני יכול לעזור?" # בעתיד נחבר כאן STT
     
