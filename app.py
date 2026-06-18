@@ -23,7 +23,7 @@ def handle_voice():
     tts.save("response.mp3")
     
     # החזרת הקובץ לטלפון
-    return Response(open("response.mp3", "rb").read(), mimetype="audio/mpeg")
+    return Response(open("response.mp3", "rb").read(), mimetype='audio/mpeg')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
