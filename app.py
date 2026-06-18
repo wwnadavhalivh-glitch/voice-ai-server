@@ -4,9 +4,9 @@ from gtts import gTTS
 import os
 
 app = Flask(__name__)
-client = OpenAI(api_key="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")
+client = OpenAI(api_key="OPENAI_API_KEY")
 
-@app.route('/voice-ai', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def handle_voice():
     # כאן יגיע האודיו מימות המשיח
     user_text = "שלום, איך אני יכול לעזור?" # בעתיד נחבר כאן STT
