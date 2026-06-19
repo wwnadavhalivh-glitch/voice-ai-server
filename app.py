@@ -1,26 +1,17 @@
-from flask import Flask, request, Response
-import os
-from openai import OpenAI
+from flask import Flask, request
 
 app = Flask(__name__)
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 @app.route('/webhook', methods=['POST'])
 def handle_voice():
-    # קבלת הקלט מהטלפון (מה שהמשתמש אמר)
-    user_text = request.values.get('data', 'שלום') 
-    
-    # פנייה מהירה ל-GPT
-    completion = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": user_text}]
-    )
-    ai_text = completion.choices[0].message.content
-    
-    # כאן אנחנו חייבים לחזור מהר. 
-    # לצורך הבדיקה נשתמש בטקסט שימות המשיח יקראו (TTS של ימות המשיח)
-    # זה הכי מהיר שיש!
-    return f"say=הנה התשובה שלי: {ai_text}"
+    # בדיקה האם הגיע קובץ קול
+    if 'file' in request.files:
+        audio_file = request.files['file']
+        audio_file.save("received_audio.mp3")
+        print("קובץ אודיו התקבל ונשמר!")
+        return "קיבלתי את ההקלטה"
+    else:
+        return "לא התקבל קובץ"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
