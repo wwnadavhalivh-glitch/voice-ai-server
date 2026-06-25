@@ -1,4 +1,4 @@
 flask
-openai
+google-genai
 gTTS
 gunicorn
