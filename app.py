@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 from flask import Flask, request
 from google import genai
 
@@ -12,22 +13,23 @@ def home():
 
 @app.route('/webhook', methods=['POST', 'GET'])
 def handle_voice():
-    # שורת ההקלטה הרשמית של ימות המשיח באמצעות פקודת read
-    # היא מקריאה טקסט, מקליטה קובץ בשם voice_input וממתינה עד 60 שניות או סולמית
-    yemot_record_command = "read=t-שלום. אנא שאל את שאלתך לאחר הצליל, ובסיום לחץ סולמית.=voice_input,record,no,2,60,no,no,yes,no"
+    # הגדרות ההקלטה הרשמיות של ימות המשיח
+    recording_settings = ",record,no,2,60,no,no,yes,no"
 
     # ====================================================
-    # 1. בדיקה: אם לא הגיע שום קובץ שמע בבקשה
+    # א. הודעת פתיחה והקלטה (כשאין קובץ שמע בבקשה)
     # ====================================================
     if not request.files:
-        # במקום לקרוס, פשוט נשמיע למשתמש את הודעת הפתיחה וההקלטה
-        return yemot_record_command
+        text_to_say = "שלום. אנא שאל את שאלתך לאחר הצליל, ובסיום לחץ סולמית."
+        # קידוד הטקסט לעברית תקנית שהשרת של ימות המשיח יבין ולא יתנתק
+        encoded_text = urllib.parse.quote(text_to_say)
+        
+        return f"read=t-{encoded_text}=voice_input{recording_settings}"
 
     # ====================================================
-    # 2. אם הגענו לכאן - סימן שיש קובץ שמע! מעבדים בג'מיני
+    # ב + ג. עיבוד קובץ השמע מול ג'מיני (כשיש קובץ שמע)
     # ====================================================
     try:
-        # לקיחת קובץ השמע שנשלח מהטלפון
         audio_file = next(iter(request.files.values()))
         audio_data = audio_file.read()
         
@@ -43,13 +45,16 @@ def handle_voice():
         
         ai_response = response.text.replace('*', '').replace('#', '').strip()
         
-        # החזרת התשובה של ג'מיני להקראה בטלפון
-        return f"id_list_message=t-{ai_response}"
+        # ====================================================
+        # ד. השמעת התשובה שחזרה מג'מיני למשתמש
+        # ====================================================
+        encoded_response = urllib.parse.quote(ai_response)
+        return f"id_list_message=t-{encoded_response}"
         
     except Exception as e:
         print(f"שגיאה בעיבוד הקול: {e}")
-        # אם יש שגיאה אמיתית מול ג'מיני, נשמיע הודעה ונפתח שוב הקלטה
-        return f"id_list_message=t-התרחשה שגיאה בעיבוד הקול.&{yemot_record_command}"
+        error_text = urllib.parse.quote("התרחשה שגיאה בעיבוד הקול. אנא נסה שוב.")
+        return f"id_list_message=t-{error_text}"
 
 
 if __name__ == '__main__':
