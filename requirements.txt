@@ -1,3 +1,5 @@
 Flask
-google-generativeai
 gunicorn
+requests
+google-genai
+edge-tts
