@@ -4,20 +4,22 @@ from flask import Flask, request, Response
 app = Flask(__name__)
 
 def handle_voice_logic():
-    # שליפת הטקסט שימות המשיח תרגמו מהקול שלך
+    # קריאת הטקסט שהגיע מימות המשיח
     user_text = request.values.get('ApiText', '').strip()
     
     print("\n" + "="*40)
     print(f"!!! הטקסט שנקלט מהטלפון: {user_text} !!!")
     print("="*40 + "\n")
 
-    # אם המשתמש הגיע לשלוחה בפעם הראשונה (לפני שהוא דיבר)
+    # פנייה ראשונה: המשתמש רק נכנס לשלוחה ועדיין לא דיבר
     if not user_text:
-        # נחזיר הודעה ריקה בפורמט תקני, כדי שהמערכת של ימות המשיח תמשיך מיד להקלטה
-       return Response("read=t=נא לדבר לאחר הצליל=ApiText", mimetype='text/plain; charset=utf-8')
+        # הפקודה הרשמית של ימות המשיח להקראת טקסט לפני תחילת ההקלטה של ה-API
+        # s=הקלטת טקסט, t=טקסט להקראה, var=שם המשתנה שיחזור אלינו
+        response_format = "read=f=s&t=אנא שאל את שאלתך לאחר הצליל ולחץ סולמית&var=ApiText&"
+        return Response(response_format, mimetype='text/plain; charset=utf-8')
     
-    # אם המשתמש כבר דיבר והגיע טקסט - נחזיר פקודת הקראה תקנית ב-100%
-    response_format = f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&"
+    # פנייה שנייה: המשתמש כבר דיבר ויש לנו טקסט!
+    response_format = f"read=t=השרת קלט בהצלחה את מה שאמרת: {user_text}&"
     return Response(response_format, mimetype='text/plain; charset=utf-8')
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
