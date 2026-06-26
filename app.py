@@ -5,29 +5,22 @@ app = Flask(__name__)
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
-    # בדיקה האם כבר חזר אלינו קובץ שמע מימות המשיח
-    audio_url = request.values.get('recording_file_link') or request.values.get('file_url') or ''
+    # ימות המשיח ישלחו את הקישור בקובץ הבא בפנייה השנייה
+    audio_url = request.values.get('recording_file_link') or ''
 
-    # שלב א': אם זו פנייה ראשונית ואין קובץ - השרת שולח הוראות הקלטה לטלפון
+    # שלב 1: פנייה ראשונית - השרת מורה לטלפון להקריא טקסט, להשמיע צליל ולהקליט
     if not audio_url:
-        print("\n=== שיחה נכנסה: שולח פקודות הקלטה לטלפון ===")
+        print("\n=== שיחה נכנסה: שולח פקודת הקלטה לטלפון ===")
         
-        # פקודות משורשרות (rapi): 
-        # 000: השמעת הטקסט שלך
-        # 001: השמעת צפצוף (beep)
-        # 002: הקלטה לתיקייה זמנית, זיהוי 3 שניות שתיקה ושליחה חזרה לשרת (yes)
-        instructions = (
-            "api_000=rapi,,say_text,שלום כאן הבוט החכם שלך אנא הקלט את הודעתך לאחר הצליל&"
-            "api_001=rapi,,play_sound,beep&"
-            "api_002=rapi,,record,/gemini_temp/auto,,yes,3,1&"
-        )
-        return Response(instructions, mimetype='text/plain; charset=utf-8')
+        # מבנה הפקודה: read=t=הטקסט=שם_משתנה,מקש_סיום,מינימום_שניות,מקסימום_שניות,השמעה_לאישור,סוג_הקלטה,שמירה_בשלוחה
+        # השתמשנו בסוג v (הקלטת קול) ובמשתנה recording_file_link
+        instruction = "read=t=שלום כאן הבוט החכם שלך אנא הקלט את הודעתך לאחר הצליל=recording_file_link,hash,2,30,no,v,no&"
+        return Response(instruction, mimetype='text/plain; charset=utf-8')
 
-    # שלב ב': הטלפון סיים להקליט וחזר לשרת עם הקובץ!
+    # שלב 2: הטלפון סיים להקליט וחזר לשרת עם הקובץ
     print(f"\n=== הצלחה! הקובץ הוקלט ונשלח לשרת. הקישור: {audio_url} ===")
     
-    # כרגע רק נשמיע למשתמש שהקובץ התקבל בהצלחה כדי לראות שהכל עובד
-    return Response("read=t=ההקלטה שלך התקבל בשרת בהצלחה, תודה=no,no,no&", mimetype='text/plain; charset=utf-8')
+    return Response("read=t=ההקלטה שלך התקבלה בשרת בהצלחה, תודה=no,no,no&", mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
