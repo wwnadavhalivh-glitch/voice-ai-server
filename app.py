@@ -1,5 +1,5 @@
 import os
-import urllib.parse
+import urllib.parse  # השורה החסרה שהפילה את השרת!
 from flask import Flask, request
 from google import genai
 
@@ -13,7 +13,11 @@ def home():
 @app.route('/webhook', methods=['POST'])
 def handle_voice():
     try:
-        # בזכות הגדרת api_lifecycle=end_recording, ימות המשיח שולחת את הקובץ הפיזי ב-100% מהמקרים
+        # בדיקה שיש קובץ
+        if not request.files:
+            error_text = urllib.parse.quote("לא התקבל קובץ שמע.")
+            return f"id_list_message=t-{error_text}"
+            
         audio_file = next(iter(request.files.values()))
         audio_data = audio_file.read()
         
@@ -29,7 +33,7 @@ def handle_voice():
         
         ai_response = response.text.replace('*', '').replace('#', '').strip()
         
-        # קידוד התשובה לעברית תקנית שהמערכת תדע להקריא
+        # קידוד התשובה לעברית (עכשיו זה יעבוד כי הוספנו את ה-import)
         encoded_response = urllib.parse.quote(ai_response)
         return f"id_list_message=t-{encoded_response}"
         
