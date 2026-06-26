@@ -5,10 +5,11 @@ app = Flask(__name__)
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
-    print(f"\n=== התקבלה פנייה! פרמטרים: {dict(request.values)} ===")
+    # מדפיס ללוג של רנדר שקיבלנו פנייה
+    print("קיבלתי פנייה מימות המשיח!")
     
-    # פקודה פשוטה להשמעת טקסט בלבד, ללא הקלטה
-    return Response("read=t=שלום, השרת מחובר בהצלחה=no,no,no&", mimetype='text/plain; charset=utf-8')
+    # מחזיר הודעה פשוטה להשמעה בטלפון
+    return Response("read=t=השרת מחובר בהצלחה=no,no,no&", mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
