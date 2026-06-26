@@ -15,7 +15,7 @@ def gemini_voice_endpoint():
     # פנייה ראשונה: המשתמש רק נכנס לשלוחה ועוד לא דיבר
     if not user_text:
         # פקודה רשמית: תקריא טקסט (t=), תפעיל המרת דיבור (api_text_convert=yes) ותחזיר למשתנה (var=ApiText)
-        response_format = "read=t=לא נקלט דיבור, אנא נסו שוב.&"
+        response_format = "read=t=נא לומר את שאלתך לאחר הצליל ובסיום לחץ סולמית&api_text_convert=yes&var=ApiText&"
         return Response(response_format, mimetype='text/plain; charset=utf-8')
     
     # פנייה שנייה: המשתמש דיבר והטקסט חזר לשרת בהצלחה!
