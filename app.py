@@ -1,5 +1,6 @@
 import os
 import urllib.parse  # השורה החסרה שהפילה את השרת!
+import urllib.parse
 from flask import Flask, request
 from google import genai
 
