@@ -12,7 +12,8 @@ client = genai.Client()
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
     # פקודת rapi,,record שולחת את הקישור באחד משני הפרמטרים הבאים:
-    audio_url = request.values.get('recording_file_link') or request.values.get('file_url', '')
+    audio_url = request.values.get('recording_file_link') or request.values.get('file_url') or request.values.get('url') or ''
+    print(f"כל הפרמטרים שהתקבלו: {dict(request.values)}")
 
     if not audio_url:
         print("\n=== פנייה ראשונית או ללא קובץ שמע ===")
