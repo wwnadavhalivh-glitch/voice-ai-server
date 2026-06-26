@@ -1,49 +1,27 @@
 import os
 from flask import Flask, request, Response
-import google.generativeai as genai
 
 app = Flask(__name__)
-
-# הגדרת מפתח ה-API
-GOOGLE_API_KEY = os.environ.get("GEMINI_API_KEY")
-genai.configure(api_key=GOOGLE_API_KEY)
-
-# מודל Gemini 1.5 Flash - מהיר ומצוין
-model = genai.GenerativeModel('gemini-1.5-flash')
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
 def gemini_voice():
-    # שליפת הטקסט שימות המשיח תרגמו מהקול של המשתמש
+    # 1. קריאת הפרמטר של הטקסט שימות המשיח שלחו
     user_text = request.args.get('ApiText', '').strip()
     
-    # הדפסה ללוג של רנדר כדי שתוכל לראות מה המשתמש אמר
-    print(f"User asked: {user_text}")
+    # 2. הדפסה ברורה ללוג של Render (זה מה שיופיע לך במסך)
+    print("=========================================")
+    print(f"הטקסט שהתקבל מהטלפון: {user_text}")
+    print("=========================================")
 
-    # אם המשתמש לא אמר כלום או שהתרגום ריק
+    # 3. בדיקה אם הטקסט הגיע ריק
     if not user_text:
-        return Response("read=t=לא שמעתי או לא הבנתי את השאלה, אנא נסה שוב.&", mimetype='text/plain; charset=utf-8')
-
-    try:
-        # הנחיית מערכת ל-Gemini
-        system_instruction = "אתה עוזר קולי בטלפון. תענה בעברית, בצורה קצרה (עד 2-3 משפטים), ברורה ובלי להשתמש בסימני עיצוב של טקסט כמו כוכביות או סולמיות."
-        
-        # פנייה ל-Gemini
-        gemini_response = model.generate_content(f"{system_instruction}\n\nהשאלה: {user_text}")
-        answer = gemini_response.text
-        
-        # ניקוי תווים מיוחדים ליתר ביטחון
-        answer = answer.replace('*', '').replace('#', '').replace('\n', ' ').strip()
-        
-        print(f"Gemini answered: {answer}")
-        
-        # החזרת הפקודה לימות המשיח
-        response_text = f"read=t={answer}&"
+        response_text = "read=t=הגעת לשרת בהצלחה, אך לא נקלט שום טקסט. אנא נסה לדבר חזק יותר לאחר הצליל.&"
         return Response(response_text, mimetype='text/plain; charset=utf-8')
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return Response("read=t=מתנצל, אירעה שגיאה בקבלת התשובה מג'מיני.&", mimetype='text/plain; charset=utf-8')
+    
+    # 4. אם הטקסט הגיע - נחזיר אותו למערכת כדי שהיא תקריא לך אותו בחזרה
+    response_text = f"read=t=הטקסט התקבל בשרת בהצלחה! אתה אמרת: {user_text}&"
+    return Response(response_text, mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
