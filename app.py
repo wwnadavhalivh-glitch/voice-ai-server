@@ -1,46 +1,50 @@
 import os
-import urllib.parse
 from flask import Flask, request
 from google import genai
 
 app = Flask(__name__)
+
+# שליפת מפתח ה-API שהגדרנו ב-Render
 API_KEY = os.environ.get("GEMINI_API_KEY")
+# אתחול הלקוח של ג'מיני באמצעות הספרייה החדשה
+client = genai.Client(api_key=API_KEY) if API_KEY else None
 
-# הכל קורה עכשיו בנתיב הראשי של השרת
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/', methods=['GET'])
+def home():
+    return "השרת של ג'מיני באוויר!", 200
+
+@app.route('/webhook', methods=['POST', 'GET'])
 def handle_voice():
-    recording_settings = ",record,no,2,60,no,no,yes,no"
+    # ימות המשיח שולחת את הטקסט שנקלט תחת הפרמטר 'stt_text'
+    user_text = request.args.get('stt_text', '')
+    
+    # הדפסה ללוגים בשבילך לראות מה האדם אמר
+    print(f"המשתמש אמר בטלפון: {user_text}")
+    
+    if not user_text:
+        # אם האדם עדיין לא דיבר או שהקריאה רק התחילה
+        return "id_list_message=t-שלום, אני הבוט החכם שלך. אנא שאל את שאלתך לאחר הצליל.&&timeout=10"
 
-    # א. אם זו פנייה ראשונה ואין קובץ - משמיעים פתיח ומקליטים
-    if not request.files:
-        text_to_say = "שלום. אנא שאל את שאלתך לאחר הצליל, ובסיום לחץ סולמית."
-        encoded_text = urllib.parse.quote(text_to_say)
-        return f"read=t-{encoded_text}=voice_input{recording_settings}"
+    if not client:
+        return "id_list_message=t-שגיאה, מפתח ה-API לא מוגדר בשרת."
 
-    # ב + ג. אם הגיע קובץ שמע - מעבדים בג'מיני
     try:
-        audio_file = next(iter(request.files.values()))
-        audio_data = audio_file.read()
-        
-        client = genai.Client(api_key=API_KEY)
+        # שליחת השאלה למודל Gemini 2.5 Flash המהיר
         response = client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=[
-                {"mime_type": "audio/wav", "data": audio_data},
-                "תקשיב לקובץ השמע בעברית, ותענה על השאלה שנשאלה שם בצורה קצרה, ברורה ותמציתית."
-            ]
+            contents=user_text,
         )
+        ai_response = response.text
         
-        ai_response = response.text.replace('*', '').replace('#', '').strip()
+        # ניקוי תווים מיוחדים כמו כוכביות שהמודל לפעמים מחזיר, כדי שימות המשיח תקריא חלק
+        ai_response = ai_response.replace('*', '').replace('#', '').strip()
         
-        # ד. מחזירים את התשובה המקודדת להקראה
-        encoded_response = urllib.parse.quote(ai_response)
-        return f"id_list_message=t-{encoded_response}"
+        # החזרת התשובה לימות המשיח להקראה, והשארת הערוץ פתוח לשאלה הבאה
+        return f"id_list_message=t-{ai_response}"
         
     except Exception as e:
-        print(f"Error: {e}")
-        error_text = urllib.parse.quote("התרחשה שגיאה בעיבוד הקול.")
-        return f"id_list_message=t-{error_text}"
+        print(f"שגיאה בעיבוד מול ג'מיני: {e}")
+        return "id_list_message=t-התרחשה שגיאה בעיבוד הנתונים."
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
