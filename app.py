@@ -3,25 +3,29 @@ from flask import Flask, request, Response
 
 app = Flask(__name__)
 
-@app.route('/gemini-voice', methods=['GET', 'POST'])
-def gemini_voice(*args, **kwargs):
-    # שליפת הטקסט שהגיע מימות המשיח
-    user_text = request.args.get('ApiText', '').strip()
+# פונקציית עזר משותפת שרק קוראת את הטקסט ומדפיסה
+def handle_voice_logic():
+    # קריאת הפרמטר מכל סוגי הבקשות (GET, POST, URL, FORM)
+    user_text = request.values.get('ApiText', '').strip()
     
-    # הדפסה בולטת במיוחד ללוג של רנדר
     print("\n" + "="*40)
     print(f"!!! הטקסט שהתקבל מהטלפון: {user_text} !!!")
     print("="*40 + "\n")
 
     if not user_text:
-        return Response("read=t=הגעת לשרת, אך הטקסט שהתקבל ריק. נסה לדבר שוב.&", mimetype='text/plain; charset=utf-8')
+        return Response("read=t=הגעת לשרת בהצלחה. לא נקלט טקסט, אנא נסה שוב לאחר הצליל.&", mimetype='text/plain; charset=utf-8')
     
-    # החזרת תשובה קולית שתשמע בטלפון
-    return Response(f"read=t=השרת קלט בהצלחה את המילה: {user_text}&", mimetype='text/plain; charset=utf-8')
+    return Response(f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&", mimetype='text/plain; charset=utf-8')
 
+# נתיב ראשון
+@app.route('/gemini-voice', methods=['GET', 'POST'])
+def gemini_voice_endpoint():
+    return handle_voice_logic()
+
+# נתיב שני לגיבוי
 @app.route('/', methods=['GET', 'POST'])
-def home(*args, **kwargs):
-    return Response("read=t=השרת באוויר וממתין לפניות משלוחת ה-API.&", mimetype='text/plain; charset=utf-8')
+def home_endpoint():
+    return handle_voice_logic()
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
