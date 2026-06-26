@@ -5,22 +5,20 @@ app = Flask(__name__)
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST'])
-def gemini_voice():
-    # 1. קריאת הפרמטר של הטקסט שימות המשיח שלחו
+def gemini_voice(*args, **kwargs):  # הוספנו תמיכה בקבלת משתנים כדי למנוע את הקריסה
+    # קריאת הפרמטר של הטקסט שימות המשיח שלחו
     user_text = request.args.get('ApiText', '').strip()
     
-    # 2. הדפסה ברורה ללוג של Render (זה מה שיופיע לך במסך)
     print("=========================================")
     print(f"הטקסט שהתקבל מהטלפון: {user_text}")
     print("=========================================")
 
-    # 3. בדיקה אם הטקסט הגיע ריק
     if not user_text:
-        response_text = "read=t=הגעת לשרת בהצלחה, אך לא נקלט שום טקסט. אנא נסה לדבר חזק יותר לאחר הצליל.&"
-        return Response(response_text, mimetype='text/plain; charset=utf-8')
+        # אם הגיע ריק, נבקש ממנו לדבר שוב
+        return Response("read=t=הגעת לשרת בהצלחה. לא נקלט טקסט, אנא נסה שוב לאחר הצליל.&", mimetype='text/plain; charset=utf-8')
     
-    # 4. אם הטקסט הגיע - נחזיר אותו למערכת כדי שהיא תקריא לך אותו בחזרה
-    response_text = f"read=t=הטקסט התקבל בשרת בהצלחה! אתה אמרת: {user_text}&"
+    # אם הטקסט הגיע - נחזיר אותו כדי לשמוע שהכל עובד
+    response_text = f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&"
     return Response(response_text, mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
