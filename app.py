@@ -1,22 +1,27 @@
 import os
+import urllib.parse
 from flask import Flask, request
 from google import genai
 
 app = Flask(__name__)
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
-@app.route('/', methods=['GET'])
-def home():
-    return "השרת פועל וממתין לקבצים!", 200
-
-@app.route('/webhook', methods=['POST'])
+# הכל קורה עכשיו בנתיב הראשי של השרת
+@app.route('/', methods=['POST', 'GET'])
 def handle_voice():
+    recording_settings = ",record,no,2,60,no,no,yes,no"
+
+    # א. אם זו פנייה ראשונה ואין קובץ - משמיעים פתיח ומקליטים
+    if not request.files:
+        text_to_say = "שלום. אנא שאל את שאלתך לאחר הצליל, ובסיום לחץ סולמית."
+        encoded_text = urllib.parse.quote(text_to_say)
+        return f"read=t-{encoded_text}=voice_input{recording_settings}"
+
+    # ב + ג. אם הגיע קובץ שמע - מעבדים בג'מיני
     try:
-        # 1. ימות המשיח שלחה את הקובץ? תופסים אותו
         audio_file = next(iter(request.files.values()))
         audio_data = audio_file.read()
         
-        # 2. שולחים לג'מיני לקבלת תשובה טקסטואלית
         client = genai.Client(api_key=API_KEY)
         response = client.models.generate_content(
             model='gemini-2.5-flash',
@@ -26,15 +31,16 @@ def handle_voice():
             ]
         )
         
-        # 3. מנקים תווים מיוחדים
         ai_response = response.text.replace('*', '').replace('#', '').strip()
         
-        # 4. מחזירים טקסט נקי. ימות המשיח תקרא את זה ותקריא למשתמש אוטומטית!
-        return f"id_list_message=t-{ai_response}"
+        # ד. מחזירים את התשובה המקודדת להקראה
+        encoded_response = urllib.parse.quote(ai_response)
+        return f"id_list_message=t-{encoded_response}"
         
     except Exception as e:
-        print(f"שגיאה: {e}")
-        return "id_list_message=t-התרחשה שגיאה בעיבוד השאלה שלך."
+        print(f"Error: {e}")
+        error_text = urllib.parse.quote("התרחשה שגיאה בעיבוד הקול.")
+        return f"id_list_message=t-{error_text}"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
