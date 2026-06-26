@@ -11,20 +11,23 @@ client = genai.Client()
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
-    # פקודת rapi,,record שולחת את הקישור באחד משני הפרמטרים הבאים:
-    audio_url = request.values.get('recording_file_link') or request.values.get('file_url') or request.values.get('url') or ''
-    print(f"כל הפרמטרים שהתקבלו: {dict(request.values)}")
+    print(f"התקבלה פנייה משלוחת הקלטה. קבצים: {list(request.files.keys())}. פרמטרים: {dict(request.values)}")
 
-    if not audio_url:
-        print("\n=== פנייה ראשונית או ללא קובץ שמע ===")
-        return Response("", mimetype='text/plain; charset=utf-8')
-
-    print(f"\n=== ג. הקובץ אושר ונשלח לשרת! הקישור: {audio_url} ===")
-    
-    try:
-        # הורדת קובץ השמע
-        audio_response = requests.get(audio_url)
-        audio_data = audio_response.content
+    # בשלוחת הקלטה, ימות המשיח שולחים את הקובץ עצמו בתוך request.files תחת השם 'file'
+    if 'file' in request.files:
+        print("נמצא קובץ שמע שנשלח ישירות מהטלפון!")
+        audio_file = request.files['file']
+        audio_data = audio_file.read()
+    else:
+        # גיבוי במידה והם שלחו כקישור (לפי הגדרות ישנות)
+        audio_url = request.values.get('recording_file_link') or request.values.get('file_url') or ''
+        if not audio_url:
+            print("\n=== שגיאה: לא נמצא קובץ שמע בפנייה ===")
+            return Response("read=t=לא התקבל קובץ שמע תקין במערכת=no,no,no&", mimetype='text/plain; charset=utf-8')
+        
+        print(f"מוריד קובץ שמע מהקישור: {audio_url}")
+        import requests
+        audio_data = requests.get(audio_url).content   audio_data = audio_response.content
         
         print("שולח לג'ימיני לעיבוד...")
         response = client.models.generate_content(
