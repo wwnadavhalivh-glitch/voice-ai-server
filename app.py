@@ -11,7 +11,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 # בחירת המודל (למשל Gemini 1.5 Flash שהוא מהיר וזול)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-@app.route('/gemini-voice', codecs=['GET', 'POST'])
+@app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice():
     # 1. קבלת הטקסט שהומר מהמערכת של ימות המשיח
     # ימות המשיח שולחים את זה בפרמטר שקבענו (ApiText)
