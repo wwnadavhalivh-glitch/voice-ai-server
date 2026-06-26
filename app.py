@@ -1,5 +1,4 @@
 import os
-import urllib.parse
 from flask import Flask, request
 from google import genai
 
@@ -8,33 +7,17 @@ API_KEY = os.environ.get("GEMINI_API_KEY")
 
 @app.route('/', methods=['GET'])
 def home():
-    return "השרת פועל וממתין לשיחות!", 200
+    return "השרת פועל וממתין לקבצים!", 200
 
-
-@app.route('/webhook', methods=['POST', 'GET'])
+@app.route('/webhook', methods=['POST'])
 def handle_voice():
-    # הגדרות ההקלטה הרשמיות של ימות המשיח
-    recording_settings = ",record,no,2,60,no,no,yes,no"
-
-    # ====================================================
-    # א. הודעת פתיחה והקלטה (כשאין קובץ שמע בבקשה)
-    # ====================================================
-    if not request.files:
-        text_to_say = "שלום. אנא שאל את שאלתך לאחר הצליל, ובסיום לחץ סולמית."
-        # קידוד הטקסט לעברית תקנית שהשרת של ימות המשיח יבין ולא יתנתק
-        encoded_text = urllib.parse.quote(text_to_say)
-        
-        return f"read=t-{encoded_text}=voice_input{recording_settings}"
-
-    # ====================================================
-    # ב + ג. עיבוד קובץ השמע מול ג'מיני (כשיש קובץ שמע)
-    # ====================================================
     try:
+        # 1. ימות המשיח שלחה את הקובץ? תופסים אותו
         audio_file = next(iter(request.files.values()))
         audio_data = audio_file.read()
         
+        # 2. שולחים לג'מיני לקבלת תשובה טקסטואלית
         client = genai.Client(api_key=API_KEY)
-        
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=[
@@ -43,19 +26,15 @@ def handle_voice():
             ]
         )
         
+        # 3. מנקים תווים מיוחדים
         ai_response = response.text.replace('*', '').replace('#', '').strip()
         
-        # ====================================================
-        # ד. השמעת התשובה שחזרה מג'מיני למשתמש
-        # ====================================================
-        encoded_response = urllib.parse.quote(ai_response)
-        return f"id_list_message=t-{encoded_response}"
+        # 4. מחזירים טקסט נקי. ימות המשיח תקרא את זה ותקריא למשתמש אוטומטית!
+        return f"id_list_message=t-{ai_response}"
         
     except Exception as e:
-        print(f"שגיאה בעיבוד הקול: {e}")
-        error_text = urllib.parse.quote("התרחשה שגיאה בעיבוד הקול. אנא נסה שוב.")
-        return f"id_list_message=t-{error_text}"
-
+        print(f"שגיאה: {e}")
+        return "id_list_message=t-התרחשה שגיאה בעיבוד השאלה שלך."
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
