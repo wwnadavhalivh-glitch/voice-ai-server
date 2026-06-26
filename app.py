@@ -5,8 +5,8 @@ import google.generativeai as genai
 app = Flask(__name__)
 
 # הגדרת מפתח ה-API של גוגל (מומלץ להגדיר כמשתנה סביבה Environment Variable ב-Render)
-GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "YOUR_ACTUAL_API_KEY_HERE")
-genai.configure(api_key=GOOGLE_API_KEY)
+GOOGLE_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_ACTUAL_API_KEY_HERE")
+genai.configure(api_key=GEMINI_API_KEY)
 
 # בחירת המודל (למשל Gemini 1.5 Flash שהוא מהיר וזול)
 model = genai.GenerativeModel('gemini-1.5-flash')
