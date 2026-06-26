@@ -3,26 +3,27 @@ from flask import Flask, request, Response
 
 app = Flask(__name__)
 
-# פונקציית עזר משותפת שרק קוראת את הטקסט ומדפיסה
 def handle_voice_logic():
-    # קריאת הפרמטר מכל סוגי הבקשות (GET, POST, URL, FORM)
+    # קריאת הטקסט שהגיע מהטלפון
     user_text = request.values.get('ApiText', '').strip()
     
     print("\n" + "="*40)
     print(f"!!! הטקסט שהתקבל מהטלפון: {user_text} !!!")
     print("="*40 + "\n")
 
+    # אם זו תחילת השיחה והטקסט ריק - נחזיר פקודה שמפעילה את מנוע ההקלטה של ימות המשיח!
     if not user_text:
-        return Response("read=t=הגעת לשרת בהצלחה. לא נקלט טקסט, אנא נסה שוב לאחר הצליל.&", mimetype='text/plain; charset=utf-8')
+        # הפקודה הזו אומרת למערכת: תשמיעי צפצוף, תתחילי להקליט, ותחזרי לפה עם הטקסט
+        response_text = "read=t=אנא שאל את שאלתך לאחר הצליל ולחץ סולמית&בדיקה=api_text_convert=yes&"
+        return Response(response_text, mimetype='text/plain; charset=utf-8')
     
-    return Response(f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&", mimetype='text/plain; charset=utf-8')
+    # אם המשתמש כבר דיבר ויש טקסט - נחזיר לו את מה שהוא אמר
+    return Response(f"read=t=הצלחה! אמרת: {user_text}&", mimetype='text/plain; charset=utf-8')
 
-# נתיב ראשון
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
     return handle_voice_logic()
 
-# נתיב שני לגיבוי
 @app.route('/', methods=['GET', 'POST'])
 def home_endpoint():
     return handle_voice_logic()
