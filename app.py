@@ -1,47 +1,56 @@
 import os
-import urllib.parse  # השורה החסרה שהפילה את השרת!
-from flask import Flask, request
-from google import genai
+from flask import Flask, request, Response
+import google.generativeai as genai
 
 app = Flask(__name__)
-API_KEY = os.environ.get("GEMINI_API_KEY")
 
-@app.route('/', methods=['GET'])
-def home():
-    return "השרת פועל וממתין לקבצים!", 200
+# הגדרת מפתח ה-API של גוגל (מומלץ להגדיר כמשתנה סביבה Environment Variable ב-Render)
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "YOUR_ACTUAL_API_KEY_HERE")
+genai.configure(api_key=GOOGLE_API_KEY)
 
-@app.route('/webhook', methods=['POST'])
-def handle_voice():
+# בחירת המודל (למשל Gemini 1.5 Flash שהוא מהיר וזול)
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+@app.route('/gemini-voice', codecs=['GET', 'POST'])
+def gemini_voice():
+    # 1. קבלת הטקסט שהומר מהמערכת של ימות המשיח
+    # ימות המשיח שולחים את זה בפרמטר שקבענו (ApiText)
+    user_text = request.args.get('ApiText', '')
+    
+    # הגנה במקרה שהטקסט ריק או שהזיהוי נכשל
+    if not user_text:
+        # מחזירים פקודה לימות המשיח להקריא שלא נקלטה שאלה
+        response_text = "read=t=לא שמעתי את השאלה, אנא נסה שנית.&"
+        return Response(response_text, mimetype='text/plain')
+    
     try:
-        # בדיקה שיש קובץ
-        if not request.files:
-            error_text = urllib.parse.quote("לא התקבל קובץ שמע.")
-            return f"id_list_message=t-{error_text}"
-            
-        audio_file = next(iter(request.files.values()))
-        audio_data = audio_file.read()
+        # הנחיה קצרה למודל כדי שהתשובות יהיו מתאימות להקראה טלפונית (בלי סימנים מוזרים, קצרות יחסית)
+        system_instruction = "אתה עוזר קולי בטלפון. תענה בעברית, בצורה קצרה, ברורה ובלי להשתמש בסימני עיצוב של טקסט כמו כוכביות או נקודות של רשימות."
         
-        # שליחה לג'מיני
-        client = genai.Client(api_key=API_KEY)
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=[
-                {"mime_type": "audio/wav", "data": audio_data},
-                "תקשיב לקובץ השמע בעברית, ותענה על השאלה שנשאלה שם בצורה קצרה, ברורה ותמציתית."
-            ]
+        # 2. שליחת השאלה ל-Gemini
+        # הערה: בשביל שיחה זורמת עם זיכרון בעתיד נשתמש ב-chat, כרגע זה פשוט שאלה-תשובה
+        gemini_response = model.generate_content(
+            f"{system_instruction}\n\nהשאלה של המשתמש: {user_text}"
         )
         
-        ai_response = response.text.replace('*', '').replace('#', '').strip()
+        answer = gemini_response.text
         
-        # קידוד התשובה לעברית (עכשיו זה יעבוד כי הוספנו את ה-import)
-        encoded_response = urllib.parse.quote(ai_response)
-        return f"id_list_message=t-{encoded_response}"
+        # ניקוי בסיסי של תווים שעלולים לבלבל את מנוע הדיבור (כמו כוכביות שגוגל אוהב להחזיר)
+        answer = answer.replace('*', '').replace('#', '').strip()
+        
+        # 3. יצירת התשובה בפורמט של ימות המשיח
+        # הפקודה read=t= אומרת למערכת להקריא את הטקסט הבא (TTS)
+        # בסוף נשים תו & כפי שנדרש בפרוטוקול שלהם
+        response_text = f"read=t={answer}&"
         
     except Exception as e:
-        print(f"שגיאה בעיבוד הקול: {e}")
-        error_text = urllib.parse.quote("התרחשה שגיאה בעיבוד הקול. אנא נסה שוב.")
-        return f"id_list_message=t-{error_text}"
+        print(f"Error: {e}")
+        response_text = "read=t=מתנצל, אירעה שגיאה בעיבוד השאלה שלך.&"
+    
+    # החזרת התשובה כטקסט פשוט (text/plain) עם קידוד utf-8 כדי שהעברית לא תתבשבש
+    return Response(response_text, mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    # Render דורשת להאזין לפורט שהיא מגדירה במשתנה הסביבה PORT
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
