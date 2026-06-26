@@ -23,7 +23,7 @@ def handle_voice():
     
     if not user_text:
         # אם האדם עדיין לא דיבר או שהקריאה רק התחילה
-        return "id_list_message=t-שלום, אני הבוט החכם שלך. אנא שאל את שאלתך לאחר הצליל.&&timeout=10"
+        return "id_list_message=t-שלום, אני הבוט החכם שלך. אנא שאל את שאלתך לאחר הצליל.&&timeout=4"
 
     if not client:
         return "id_list_message=t-שגיאה, מפתח ה-API לא מוגדר בשרת."
