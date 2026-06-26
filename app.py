@@ -3,29 +3,27 @@ from flask import Flask, request, Response
 
 app = Flask(__name__)
 
-# פונקציה ראשית שמטפלת בנתיב המבוקש מימות המשיח
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice():
-    # קריאת הפרמטר של הטקסט שימות המשיח שלחו
-    user_text = request.args.get('ApiText', '').strip()
+    # ימות המשיח שולחים את נתיב קובץ השמע שהוקלט באחד מהפרמטרים הבאים:
+    file_url = request.args.get('ApiFileUrl', '')
+    file_name = request.args.get('ApiFileName', '')
     
     print("=========================================")
-    print(f"הטקסט שהתקבל מהטלפון: {user_text}")
+    print(" פנייה חדשה התקבלה מהטלפון!")
+    print(f"קישור לקובץ השמע: {file_url}")
+    print(f"שם הקובץ שהוקלט: {file_name}")
     print("=========================================")
 
-    if not user_text:
-        return Response("read=t=הגעת לשרת בהצלחה. לא נקלט טקסט, אנא נסה שוב לאחר הצליל.&", mimetype='text/plain; charset=utf-8')
-    
-    response_text = f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&"
-    return Response(response_text, mimetype='text/plain; charset=utf-8')
+    # תגובה חזרה לימות המשיח כדי שהשיחה לא תתנתק בשגיאה
+    if file_url:
+        return Response("read=t=קובץ השמע התקבל בשרת בהצלחה.&", mimetype='text/plain; charset=utf-8')
+    else:
+        return Response("read=t=הגעת לשרת, אך קובץ השמע לא נמצא בפנייה.&", mimetype='text/plain; charset=utf-8')
 
-# פונקציית גיבוי לנתיב הראשי של השרת במקרה הצורך
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    user_text = request.args.get('ApiText', '').strip()
-    if user_text:
-        return Response(f"read=t=הצלחה מהנתיב הראשי! אמרת: {user_text}&", mimetype='text/plain; charset=utf-8')
-    return Response("read=t=השרת באוויר וממתין לפניות.&", mimetype='text/plain; charset=utf-8')
+    return Response("השרת באוויר וממתין לקבצי שמע.&", mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
