@@ -11,22 +11,21 @@ client = genai.Client()
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
-    # בשלוחת הקלטה (type=record), ימות המשיח שולחים את קובץ השמע בפרמטר שנקרא 'file_url'
+    # ימות המשיח שולחים את נתיב הקובץ בפרמטר file_url
     audio_url = request.values.get('file_url', '')
 
     if not audio_url:
-        print("\n=== התקבלה פנייה ללא קובץ שמע ===")
-        return Response("read=t=לא התקבל קובץ שמע מהמערכת=no,no,no&", mimetype='text/plain; charset=utf-8')
+        print("\n=== פנייה ללא קובץ שמע ===")
+        return Response("read=t=לא התקבל קובץ שמע=no,no,no&", mimetype='text/plain; charset=utf-8')
 
-    print(f"\n=== התקבל קובץ שמע חדש מההקלטה: {audio_url} ===")
+    print(f"\n=== התקבל קובץ שמע חדש: {audio_url} ===")
     
     try:
-        # 1. הורדת קובץ השמע מהשרת של ימות המשיח לזיכרון
+        # הורדת קובץ השמע לזיכרון השרת
         audio_response = requests.get(audio_url)
         audio_data = audio_response.content
         
-        # 2. שליחת הקובץ ישירות לג'ימיני שיקשיב לו
-        print("שולח את ה-Audio לג'ימיני...")
+        print("שולח לג'ימיני לעיבוד...")
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=[
@@ -34,25 +33,25 @@ def gemini_voice_endpoint():
                     data=audio_data,
                     mime_type='audio/wav'
                 ),
-                "הקשב היטב לקובץ השמע בעברית וענה עליו בקצרה ובשפה ברורה (עד 2 משפטים), מתאים להקראה קולית בטלפון."
+                "הקשב לקובץ השמע וענה עליו בעברית בקצרות (עד 2 משפטים)."
             ]
         )
         
         answer_text = response.text
-        print(f"תשובת ג'ימיני שמתקבלת: {answer_text}")
+        print(f"תשובת ג'ימיני: {answer_text}")
 
-        # 3. החזרת התשובה למשתמש (המערכת תקריא לו את הטקסט של ג'ימיני)
-        response_format = f"read=t={answer_text}=no,no,no&"
-        return Response(response_format, mimetype='text/plain; charset=utf-8')
+        return Response(f"read=t={answer_text}=no,no,no&", mimetype='text/plain; charset=utf-8')
 
     except Exception as e:
-        print(f"שגיאה בתהליך עיבוד השמע: {e}")
-        return Response("read=t=חלה שגיאה בעיבוד הנתונים באיי איי=no,no,no&", mimetype='text/plain; charset=utf-8')
+        print(f"שגיאה בעיבוד השמע: {e}")
+        return Response("read=t=חלה שגיאה זמנית במערכת=no,no,no&", mimetype='text/plain; charset=utf-8')
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST', 'HEAD'])
 def home_endpoint():
-    return "Server is running perfectly for Yemot Recorder!"
+    # החזרת תגובה תקינה גם ל-HEAD וגם ל-GET כדי שרנדר ידע שהשרת חי ובריא ולא יכבה אותו!
+    return Response("OK", status=200, mimetype='text/plain')
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
+    # התאמה מלאה למערכת הפורטים של Render
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
