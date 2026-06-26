@@ -4,21 +4,21 @@ from flask import Flask, request, Response
 app = Flask(__name__)
 
 def handle_voice_logic():
-    # קריאת הטקסט שהגיע מהטלפון
+    # שליפת הטקסט שימות המשיח תרגמו מהקול שלך
     user_text = request.values.get('ApiText', '').strip()
     
     print("\n" + "="*40)
-    print(f"!!! הטקסט שהתקבל מהטלפון: {user_text} !!!")
+    print(f"!!! הטקסט שנקלט מהטלפון: {user_text} !!!")
     print("="*40 + "\n")
 
-    # אם זו תחילת השיחה והטקסט ריק - נחזיר פקודה שמפעילה את מנוע ההקלטה של ימות המשיח!
+    # אם המשתמש הגיע לשלוחה בפעם הראשונה (לפני שהוא דיבר)
     if not user_text:
-        # הפקודה הזו אומרת למערכת: תשמיעי צפצוף, תתחילי להקליט, ותחזרי לפה עם הטקסט
-        response_text = "read=t=אנא שאל את שאלתך לאחר הצליל ולחץ סולמית&בדיקה=api_text_convert=yes&"
-        return Response(response_text, mimetype='text/plain; charset=utf-8')
+        # נחזיר הודעה ריקה בפורמט תקני, כדי שהמערכת של ימות המשיח תמשיך מיד להקלטה
+        return Response("read=t=&", mimetype='text/plain; charset=utf-8')
     
-    # אם המשתמש כבר דיבר ויש טקסט - נחזיר לו את מה שהוא אמר
-    return Response(f"read=t=הצלחה! אמרת: {user_text}&", mimetype='text/plain; charset=utf-8')
+    # אם המשתמש כבר דיבר והגיע טקסט - נחזיר פקודת הקראה תקנית ב-100%
+    response_format = f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&"
+    return Response(response_format, mimetype='text/plain; charset=utf-8')
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
