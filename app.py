@@ -14,7 +14,7 @@ def handle_voice_logic():
     # אם המשתמש הגיע לשלוחה בפעם הראשונה (לפני שהוא דיבר)
     if not user_text:
         # נחזיר הודעה ריקה בפורמט תקני, כדי שהמערכת של ימות המשיח תמשיך מיד להקלטה
-        return Response("read=t=&", mimetype='text/plain; charset=utf-8')
+       return Response("read=t=נא לדבר לאחר הצליל=ApiText", mimetype='text/plain; charset=utf-8')
     
     # אם המשתמש כבר דיבר והגיע טקסט - נחזיר פקודת הקראה תקנית ב-100%
     response_format = f"read=t=הצלחה! השרת קלט שאמרת: {user_text}&"
