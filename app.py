@@ -11,17 +11,17 @@ client = genai.Client()
 
 @app.route('/gemini-voice', methods=['GET', 'POST'])
 def gemini_voice_endpoint():
-    # ימות המשיח שולחים את נתיב הקובץ בפרמטר file_url
-    audio_url = request.values.get('file_url', '')
+    # פקודת rapi,,record שולחת את הקישור באחד משני הפרמטרים הבאים:
+    audio_url = request.values.get('recording_file_link') or request.values.get('file_url', '')
 
     if not audio_url:
-        print("\n=== פנייה ללא קובץ שמע ===")
-        return Response("read=t=לא התקבל קובץ שמע=no,no,no&", mimetype='text/plain; charset=utf-8')
+        print("\n=== פנייה ראשונית או ללא קובץ שמע ===")
+        return Response("", mimetype='text/plain; charset=utf-8')
 
-    print(f"\n=== התקבל קובץ שמע חדש: {audio_url} ===")
+    print(f"\n=== ג. הקובץ אושר ונשלח לשרת! הקישור: {audio_url} ===")
     
     try:
-        # הורדת קובץ השמע לזיכרון השרת
+        # הורדת קובץ השמע
         audio_response = requests.get(audio_url)
         audio_data = audio_response.content
         
@@ -38,20 +38,19 @@ def gemini_voice_endpoint():
         )
         
         answer_text = response.text
-        print(f"תשובת ג'ימיני: {answer_text}")
+        print(f"ד. תשובת ג'ימיני המוכנה: {answer_text}")
 
+        # השמעת התשובה למשתמש בטלפון
         return Response(f"read=t={answer_text}=no,no,no&", mimetype='text/plain; charset=utf-8')
 
     except Exception as e:
         print(f"שגיאה בעיבוד השמע: {e}")
-        return Response("read=t=חלה שגיאה זמנית במערכת=no,no,no&", mimetype='text/plain; charset=utf-8')
+        return Response("read=t=חלה שגיאה בעיבוד התשובה=no,no,no&", mimetype='text/plain; charset=utf-8')
 
 @app.route('/', methods=['GET', 'POST', 'HEAD'])
 def home_endpoint():
-    # החזרת תגובה תקינה גם ל-HEAD וגם ל-GET כדי שרנדר ידע שהשרת חי ובריא ולא יכבה אותו!
     return Response("OK", status=200, mimetype='text/plain')
 
 if __name__ == '__main__':
-    # התאמה מלאה למערכת הפורטים של Render
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
