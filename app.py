@@ -12,7 +12,7 @@ genai.configure(api_key=GOOGLE_API_KEY)
 # מודל 1.5 פלאש תומך מצוין בקבצי אודיו ישירות
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-@app.route('/gemini-voice', codecs=None, methods=['GET', 'POST'])
+@app.route('/gemini-voice', methods=None, methods=['GET', 'POST'])
 @app.route('/', methods=['GET', 'POST']) # הוספת נתיב גיבוי לכתובת הראשית
 def gemini_voice():
     # ימות המשיח שולחים את נתיב קובץ השמע המוקלט בפרמטר המערכת
