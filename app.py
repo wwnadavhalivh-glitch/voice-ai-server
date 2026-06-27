@@ -3,30 +3,29 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+# דף הבית - כדי שנוכל לבדוק בדפדפן שהשרת חי
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return "OK - Server is Up and Running!"
+    return "OK - השרת באוויר ועובד!"
 
-@app.route('/webhook', methods=['GET', 'POST'])
+# נתיב קבלת הקובץ מימות המשיח
+@app.route('/webhook', methods=['POST', 'GET'])
 def webhook():
-    print("--- פנייה חדשה נכנסה ל-Webhook! ---")
-    print(f"מתודה: {request.method}")
+    print("=== פנייה חדשה הגיעה לשרת! ===")
     
-    # בדיקה האם הגיע קובץ
+    # בדיקה האם ימות המשיח שלחו קובץ
     if 'file' in request.files:
-        file = request.files['file']
-        print(f"קובץ נקלט בהצלחה! שם הקובץ במקור: {file.filename}")
+        uploaded_file = request.files['file']
+        print(f"קובץ התקבל בהצלחה! שם: {uploaded_file.filename}")
         
-        # שמירה מקומית בשרת לבדיקה
-        file.save("uploaded_audio.wav")
-        print("הקובץ נשמר בהצלחה על השרת ברנדר.")
+        # שמירה זמנית בשרת
+        uploaded_file.save("test_file.wav")
+        return "read=t-הקובץ הקיים נשלח ונקלט בשרת בהצלחה.&hangup"
         
-        return "read=t-הקובץ נשלח ונקלט בשרת בהצלחה.&hangup"
-        
-    print("אזהרה: פנייה הגיעה אך לא נמצא קובץ בתוך השדה 'file'")
-    return "read=t-הגעת לשרת בהצלחה, אך לא נשלח קובץ שמע.&hangup"
+    print("פנייה התקבלה, אך לא נמצא קובץ בשדה file")
+    return "read=t-הגעת לשרת, אך לא נשלח קובץ.&hangup"
 
 if __name__ == '__main__':
-    # שינוי קריטי עבור Render - שימוש בפורט 10000 כברירת מחדל
+    # הרצה מקומית במידת הצורך
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
