@@ -1,67 +1,68 @@
-const express = require('express');
-const multer = require('multer');
-const { GoogleGenAI } = require('@google/genai');
-const fs = require('fs');
-const path = require('path');
+import os
+from flask import Flask, request
+from google import genai
+from google.genai import types
 
-const app = express();
-const upload = multer({ dest: 'uploads/' });
+app = Flask(__name__)
 
-// אתחול ה-API של Gemini עם המפתח שלך מתוך משתני הסביבה ב-Render
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+# אתחול ה-API של Gemini באמצעות המפתח שיוגדר ב-Render
+# ה-SDK החדש מזהה אוטומטית את המשתנה GEMINI_API_KEY מהסביבה
+client = genai.Client()
 
-// משתנה גלובלי זמני לשמירת התשובה האחרונה (עבור שלוחה 2)
-let lastResponseText = "עדיין לא התקבלה תשובה מהבינה המלאכותית.";
+# משתנה גלובלי זמני לשמירת התשובה האחרונה עבור שלוחה 2
+last_response_text = "עדיין לא התקבלה תשובה מהבינה המלאכותית."
 
-// --- א. שלוחה 1 שולחת את ההקלטה לכאן ---
-app.post('/webhook', upload.single('file'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.send('read=t-שגיאה. לא התקבל קובץ שמע.&hangup');
-        }
-
-        console.log("התקבלה הקלטה חדשה, מעבד עם Gemini...");
-
-        // 1. קריאת קובץ השמע שהגיע מימות המשיח
-        const audioBuffer = fs.readFileSync(req.file.path);
+# --- א. שלוחה 1 שולחת את קובץ ההקלטה לכאן ---
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    global last_response_text
+    
+    # בדיקה האם הגיע קובץ מימות המשיח (הם שולחים תחת השם 'file')
+    if 'file' not in request.files:
+        return "read=t-שגיאה. לא התקבל קובץ שמע.&hangup"
+    
+    audio_file = request.files['file']
+    
+    if audio_file.filename == '':
+        return "read=t-שגיאה. קובץ ריק.&hangup"
+    
+    try:
+        print("התקבלה הקלטה חדשה, מעבד עם Gemini...")
         
-        // 2. שליחת קובץ השמע ישירות ל-Gemini (מודל 2.5 Pro או Flash תומכים באודיו ישירות!)
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [
-                {
-                    inlineData: {
-                        mimeType: 'audio/wav', // ימות המשיח שולחים בפורמט WAV או AMR
-                        data: audioBuffer.toString('base64')
-                    }
-                },
-                { text: "האזן להקלטה זו, וענה על השאלה בקצר ובמילים פשוטות בעברית, ללא סימנים מיוחדים או כוכביות." }
+        # קריאת תוכן קובץ השמע ישירות לזיכרון
+        audio_data = audio_file.read()
+        
+        # שליחת קובץ השמע ישירות למודל Gemini 2.5 Flash התומך באודיו
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[
+                types.Part.from_bytes(
+                    data=audio_data,
+                    mime_type='audio/wav'  # ימות המשיח שולחים בפורמט WAV
+                ),
+                "האזן להקלטה זו, וענה על השאלה בקצר ובמילים פשוטות בעברית, ללא סימנים מיוחדים או כוכביות."
             ]
-        });
+        )
+        
+        # שמירת התשובה שחזרה מהבינה המלאכותית
+        last_response_text = response.text if response.text else "לא התקבלה תשובה תקינה."
+        print(f"תשובת Gemini המוכנה: {last_response_text}")
+        
+        # פקודה לימות המשיח: להשמיע הודעה קצרה ולהעביר אוטומטית לשלוחה 2
+        return "read=t-השאלה התקבלה ומעובדת. מעביר אותך לשמיעת התשובה.&go_to_folder=2"
+        
+    except Exception as e:
+        print(f"שגיאה בעיבוד הנתונים: {e}")
+        return "read=t-תקלה זמנית בחיבור לבינה המלאכותית.&hangup"
 
-        // 3. שמירת התשובה שחזרה מה-AI
-        lastResponseText = response.text || "לא התקבלה תשובה תקינה.";
-        console.log("תשובת Gemini המוכנה:", lastResponseText);
+# --- ב. שלוחה 2 מושכת מכאן את התשובה (לטקסט לדיבור) ---
+@app.route('/get-answer', methods=['GET', 'POST'])
+def get_answer():
+    global last_response_text
+    # מחזיר את התשובה בפורמט שימות המשיח יודע להקריא (TTS)
+    return f"read=t-{last_response_text}"
 
-        // 4. מחיקת הקובץ הזמני מהשרת
-        fs.unlinkSync(req.file.path);
-
-        // 5. החזרת תשובה למחייג: מעבירים אותו אוטומטית לשלוחה 2 לשמיעת התשובה
-        // הפקודה go_to_folder=2 תעביר אותו ישירות לשלוחה 2
-        res.send('read=t-השאלה התקבלה ומעובדת. מעביר אותך לשמיעת התשובה.&go_to_folder=2');
-
-    } catch (error) {
-        console.error("שגיאה בעיבוד:", error);
-        res.send('read=t-תקלה זמנית בחיבור לבינה המלאכותית.&hangup');
-    }
-});
-
-// --- ב. שלוחה 2 מושכת מכאן את התשובה (TTS - טקסט לדיבור) ---
-app.get('/get-answer', (req, res) => {
-    // ימות המשיח בשלוחת TTS קוראים קובץ הגדרות שמקריא טקסט דינמי
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.send(`read=t-${lastResponseText}`);
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+if __name__ == '__main__':
+    # הרצה מקומית או דרך השרת
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
