@@ -3,32 +3,30 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# נתיב ראשי לבדיקה שהשרת בכלל באוויר
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return "OK - Server is Running"
+    return "OK - Server is Up and Running!"
 
-# הנתיב שאליו ימות המשיח ישלחו את קובץ ההקלטה
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    print(f"התקבלה פנייה בשרת! סוג הבקשה: {request.method}")
-    print(f"הפרמטרים שהתקבלו ב-Query: {request.args}")
+    print("--- פנייה חדשה נכנסה ל-Webhook! ---")
+    print(f"מתודה: {request.method}")
     
-    # בדיקה האם ימות המשיח שלחו קובץ
+    # בדיקה האם הגיע קובץ
     if 'file' in request.files:
-        audio_file = request.files['file']
-        print(f"התקבל קובץ בהצלחה! שם הקובץ: {audio_file.filename}")
+        file = request.files['file']
+        print(f"קובץ נקלט בהצלחה! שם הקובץ במקור: {file.filename}")
         
-        # שמירת הקובץ בשרת בשם זמני כדי לוודא שהוא אכן מגיע
-        audio_file.save("test_recording.wav")
-        print("הקובץ נשמר בהצלחה בשרת.")
+        # שמירה מקומית בשרת לבדיקה
+        file.save("uploaded_audio.wav")
+        print("הקובץ נשמר בהצלחה על השרת ברנדר.")
         
-        # נחזיר פקודה פשוטה לנתק את השיחה, בלי לעבור לשום שלוחה
-        return "read=t-הקובץ נקלט בשרת בהצלחה.&hangup"
-    
-    print("לא נמצא קובץ תחת השם file בבקשה.")
-    return "read=t-השרת פועל אך לא נשלח קובץ שמע.&hangup"
+        return "read=t-הקובץ נשלח ונקלט בשרת בהצלחה.&hangup"
+        
+    print("אזהרה: פנייה הגיעה אך לא נמצא קובץ בתוך השדה 'file'")
+    return "read=t-הגעת לשרת בהצלחה, אך לא נשלח קובץ שמע.&hangup"
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    # שינוי קריטי עבור Render - שימוש בפורט 10000 כברירת מחדל
+    port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
