@@ -1,16 +1,20 @@
 import os
-from flask import Flask, request, Response
+from flask import Flask, request
 
 app = Flask(__name__)
 
-@app.route('/gemini-voice', methods=['GET', 'POST'])
-def gemini_voice_endpoint():
-    # מדפיס ללוג של רנדר שקיבלנו פנייה
-    print("קיבלתי פנייה מימות המשיח!")
-    
-    # מחזיר הודעה פשוטה להשמעה בטלפון
-    return Response("read=t=השרת מחובר בהצלחה=no,no,no&", mimetype='text/plain; charset=utf-8')
+# נתיב ראשי (דף הבית) - כדי למנוע שגיאות 404 בבדיקות של Render
+@app.route('/', methods=['GET'])
+def home():
+    return "השרת באוויר ופועל תקין!", 200
+
+# הנתיב שאליו פונה ימות המשיח
+@app.route('/webhook', methods=['POST', 'GET'])
+def handle_voice():
+    print("קריאה נכנסה מימות המשיח:", request.args)
+    return "id_list_message=t-השרת של רנדר חובר בהצלחה למערכת הטלפונית."
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
+    # קריאת הפורט ש-Render מגדיר במערכת (לרוב 10000), ואם לא נמצא אז ברירת מחדל 5000
+    port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
