@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, Response
 
 app = Flask(__name__)
 
@@ -9,9 +9,12 @@ def home():
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    # פקודה בסיסית ביותר: רק להקריא מספר 123 ולנתק
-    # הגודל של הטקסט הזה באנגלית הוא קטן מאוד ולא יכול להתפרש לא נכון
-    return "read=num-123"
+    print("--- שיחה נכנסה: שולח פקודת בדיקה עם Content-Type תקין ---")
+    
+    פקודה = "read=num-123"
+    
+    # יצירת תגובה מיוחדת שמכריחה את ימות המשיח להבין את הטקסט
+    return Response(פקודה, mimetype='text/plain')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
