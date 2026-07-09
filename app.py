@@ -1,23 +1,29 @@
 import os
-from flask import Flask, request, Response
+from flask import Flask, request
 
 app = Flask(__name__)
 
-# אם סתם נכנסים לקישור בדפדפן
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    return "השרת באוויר!"
-
-# הכתובת שימות המשיח פונים אליה (לפי ה-ext.ini שלך)
+# נתיב ה-webhook שימות המשיח מחייגים אליו
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    print("--- ימות המשיח פנו לשרת בהצלחה! ---")
+    print("--- פנייה חדשה נכנסה משלוחה 2! ---")
     
-    # הפקודה שתגרום למערכת להקריא לך את המספרים 123
-    פקודה_לימות_המשיח = "read=num-123"
-    
-    # מחזירים את הפקודה בפורמט text/plain שהמערכת דורשת
-    return Response(פקודה_לימות_המשיח, mimetype='text/plain')
+    # הבדיקה הבסיסית: אם מגיע קובץ, נשמור אותו
+    if 'UploadFile' in request.files:
+        audio_file = request.files['UploadFile']
+        audio_file.save("user_voice.wav")
+        print("הקובץ נשמר בהצלחה בשרת!")
+        return "read=t-ההקלטה נקלטה בהצלחה בשרת.&hangup=yes"
+
+    # אם זו כניסה ראשונית (כמו הפעם ההיא שזה עבד!)
+    # אנחנו מחזירים טקסט נקי, עם ה-f כדי למנוע בעיות קידוד בעברית
+    print("שולח פקודת הקלטה למערכת...")
+    return f"read=t-אנא הקלט את הודעתך בצורה ברורה ובסיום הקש סולמית.&api_audio_record=yes"
+
+# נתיב ראשי לגיבוי
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    return "השרת של רנדר חובר בהצלחה"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
