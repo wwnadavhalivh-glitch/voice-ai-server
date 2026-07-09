@@ -3,18 +3,21 @@ from flask import Flask, request, Response
 
 app = Flask(__name__)
 
+# אם סתם נכנסים לקישור בדפדפן
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return "OK"
+    return "השרת באוויר!"
 
+# הכתובת שימות המשיח פונים אליה (לפי ה-ext.ini שלך)
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    print("--- שיחה נכנסה: שולח פקודת בדיקה עם Content-Type תקין ---")
+    print("--- ימות המשיח פנו לשרת בהצלחה! ---")
     
-    פקודה = "read=num-123"
+    # הפקודה שתגרום למערכת להקריא לך את המספרים 123
+    פקודה_לימות_המשיח = "read=num-123"
     
-    # יצירת תגובה מיוחדת שמכריחה את ימות המשיח להבין את הטקסט
-    return Response(פקודה, mimetype='text/plain')
+    # מחזירים את הפקודה בפורמט text/plain שהמערכת דורשת
+    return Response(פקודה_לימות_המשיח, mimetype='text/plain')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
