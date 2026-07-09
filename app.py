@@ -7,7 +7,7 @@ app = Flask(__name__)
 # הגדרות ה-API הרשמיות של ימות המשיח
 YM_BASE_URL = "https://www.call2all.co.il/ym/api"
 YM_NUMBER = "0772228565"  # מספר המערכת שלך
-YM_PASSWORD = "YOUR_YM_PASSWORD"  # <<< ודא ששמת כאן את הסיסמה האמיתית שלך!
+YM_PASSWORD = "79298255"  # <<< ודא ששמת כאן את הסיסמה האמיתית שלך!
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
