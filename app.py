@@ -9,29 +9,29 @@ def home():
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    print("--- פנייה חדשה התקבלה מהקו ---")
+    print("--- פנייה נכנסה משרת ימות המשיח ---")
     
     # שלב ב': המשתמש סיים להקליט והקובץ הגיע לשרת
     if 'UploadFile' in request.files:
         audio_file = request.files['UploadFile']
         
-        # שמירת הקובץ המוקלט
+        # שמירת הקובץ בשרת
         file_path = "user_recording.wav"
         audio_file.save(file_path)
-        print("הקובץ נשמר בשרת בהצלחה!")
+        print("קובץ השמע התקבל ונשמר בהצלחה בשרת!")
         
-        # כאן מתבצע עיבוד/תמלול הקובץ...
-        
-        # החזרת הודעת אישור קולית וניתוק
-        response_text = "read=t-הטקסט נשלח בהצלחה.&hangup=yes"
+        # השמעת הודעת אישור מובנית של ימות המשיח (M1211 = "תודה רבה") וניתוק השיחה
+        response_text = "play_and_get_audio=M1211&hangup=yes"
         return Response(response_text, mimetype='text/plain')
 
     # שלב א': כניסה ראשונית של המשתמש לשלוחה
-    print("שולח פקודת השמעה + ביפ להקלטה...")
+    print("שולח פקודת הקלטה תקנית עם ביפ...")
     
-    # b-1 מוסיף את הצפצוף (ביפ) בתחילת ההקלטה
-    # M0000 הוא קובץ המערכת: "אנא הקלט את הודעתך..."
-    response_text = "play_and_get_audio=M0000.b-1"
+    # פקודת API רשמית של ימות המשיח להקלטת קול עם ביפ מובנה:
+    # read=f-M0000 מקריא את קובץ המערכת של ההקלטה
+    # val_1_type=record מגדיר שזו הקלטה
+    # record_beep=yes מפעיל את הצפצוף (ביפ) בתחילת ההקלטה!
+    response_text = "read=f-M0000&val_1_type=record&record_beep=yes"
     return Response(response_text, mimetype='text/plain')
 
 if __name__ == '__main__':
