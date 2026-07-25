@@ -1,23 +1,22 @@
 from flask import Flask, request
+import os
 
 app = Flask(__name__)
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    # חילוץ הטקסט המתומלל שמגיע מימות המשיח
-    user_text = request.args.get('Transcription') or request.args.get('val_name') or request.args.get('search')
+    # קבלת הטקסט המתומלל מתוך הפרמטרים שאימו ימות המשיח
+    user_text = request.args.get('val_name') or request.args.get('Transcription') or request.args.get('search')
     
-    # הדפסת הנתונים שיופיעו ביומן ההרצה ב-Render
-    print("=" * 40)
     print(f"DEBUG - Text received from Yemot: {user_text}")
-    print("=" * 40)
-    
+
+    # אם עדיין לא התקבל טקסט (כניסה ראשונית לשלוחה)
     if not user_text:
-        # פנייה ראשונה: ימות המשיח מבקשים להקליט
-        return "read=t-אנא השמע את שאלתך ובסיום הקש סולמית&api_audio_record=yes"
-    
-    # פנייה שנייה: הקלטה נקלטה ופוענחה בהצלחה
-    return "id_list_message=t-ההודעה התקבלה בהצלחה בשרת"
+        # פקודה לימות המשיח לבקש מהמשתמש לדבר ולהקליט
+        return "read=t-מה תרצה לשאול? השמע את שאלתך ובסיום הקש סולמית&api_audio_record=yes"
+
+    # במידה והתקבל טקסט
+    return f"id_list_message=t-השאלה שהתקבלה היא {user_text}"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
