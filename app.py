@@ -1,28 +1,39 @@
-from flask import Flask, request
+import os
+from flask import Flask, request, Response
 
 app = Flask(__name__)
 
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    return "OK"
+
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    # קבלת הטקסט המתומלל במידה וימות המשיח כבר שלחו אותו
-    user_text = (
-        request.args.get('Transcription') or 
-        request.args.get('val_name') or 
-        request.args.get('search') or
-        request.args.get('v_000')
-    )
+    print("--- פנייה חדשה התקבלה מהקו ---")
     
-    print(f"DEBUG - Text received from Yemot: {user_text}")
+    # שלב ב': המשתמש סיים להקליט והקובץ הגיע לשרת
+    if 'UploadFile' in request.files:
+        audio_file = request.files['UploadFile']
+        
+        # שמירת הקובץ המוקלט
+        file_path = "user_recording.wav"
+        audio_file.save(file_path)
+        print("הקובץ נשמר בשרת בהצלחה!")
+        
+        # כאן מתבצע עיבוד/תמלול הקובץ...
+        
+        # החזרת הודעת אישור קולית וניתוק
+        response_text = "read=t-הטקסט נשלח בהצלחה.&hangup=yes"
+        return Response(response_text, mimetype='text/plain')
 
-    # אם זו פנייה ראשונה (עדיין לא התקבל טקסט)
-    if not user_text or user_text.strip() == "":
-        # t-1234 הוא קובץ ההודעה ("אנא הקלט את שאלתך ובסיום הקש סולמית")
-        # הפרמטר tap מפעיל צליל (ביפ) לפני תחילת ההקלטה
-        return "read=t-אנא הקלט את שאלתך ובסיום הקש סולמית=val_1,1,1,7,Y,No,N,tap&api_audio_record=yes"
-
-    # ברגע שהתקבל הטקסט מההקלטה והתמלול
-    print(f"SUCCESS: Received prompt: {user_text}")
-    return f"id_list_message=t-הטקסט נקלט בהצלחה בשרת: {user_text}"
+    # שלב א': כניסה ראשונית של המשתמש לשלוחה
+    print("שולח פקודת השמעה + ביפ להקלטה...")
+    
+    # b-1 מוסיף את הצפצוף (ביפ) בתחילת ההקלטה
+    # M0000 הוא קובץ המערכת: "אנא הקלט את הודעתך..."
+    response_text = "play_and_get_audio=M0000.b-1"
+    return Response(response_text, mimetype='text/plain')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
