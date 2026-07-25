@@ -1,30 +1,38 @@
-import os
 from flask import Flask, request
+import google.generativeai as genai
+import os
 
 app = Flask(__name__)
 
-# נתיב ה-webhook שימות המשיח מחייגים אליו
+# הגדרת מפתח ה-API של גוגל ג'מיני
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_GEMINI_API_KEY_HERE")
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-2.5-flash')
+
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    print("--- פנייה חדשה נכנסה משלוחה 2! ---")
+    # קבלת הטקסט המתומלל שהגיע מימות המשיח
+    user_text = request.args.get('val_name') or request.args.get('Transcription') or request.args.get('search')
     
-    # הבדיקה הבסיסית: אם מגיע קובץ, נשמור אותו
-    if 'UploadFile' in request.files:
-        audio_file = request.files['UploadFile']
-        audio_file.save("user_voice.wav")
-        print("הקובץ נשמר בהצלחה בשרת!")
-        return "read=t-ההקלטה נקלטה בהצלחה בשרת.&hangup=yes"
+    # אם זו כניסה ראשונה או שעדיין לא נקלט טקסט
+    if not user_text:
+        # פקודה לימות המשיח להקליט את המשתמש ולתמלל
+        return "read=t-מה תרצה לשאול? השמע את שאלתך בסיום הקש סולמית&api_audio_record=yes"
 
-    # אם זו כניסה ראשונית (כמו הפעם ההיא שזה עבד!)
-    # אנחנו מחזירים טקסט נקי, עם ה-f כדי למנוע בעיות קידוד בעברית
-    print("שולח פקודת הקלטה למערכת...")
-    return f"read=t-אנא הקלט את הודעתך בצורה ברורה ובסיום הקש סולמית.&api_audio_record=yes"
+    try:
+        # שליחת השאלה לג'מיני
+        response = model.generate_content(user_text)
+        answer = response.text
+        
+        # ניקוי תווים מיוחדים שעשויים להפריע להקראה הטלפונית
+        clean_answer = answer.replace('*', '').replace('#', '').replace('\n', ' ')
+        
+        # החזרת התשובה להקראה + בקשה לשאלה נוספת
+        return f"id_list_message=t-{clean_answer}&read=t-האם יש לך שאלה נוספת?&api_audio_record=yes"
 
-# נתיב ראשי לגיבוי
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    return "השרת של רנדר חובר בהצלחה"
+    except Exception as e:
+        print(f"Error: {e}")
+        return "id_list_message=t-תרחשה שגיאה בעיבוד הבקשה, אנא נסה שוב מאוחר יותר."
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=10000)
