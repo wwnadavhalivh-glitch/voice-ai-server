@@ -12,7 +12,8 @@ def webhook():
     print(f"Args (GET): {request.args.to_dict()}")
     
     # בדיקה האם הגיעו נתונים מהמשתמש (הטקסט שהוקלט והומר)
-    user_text = request.args.get('text')
+    raw_text = request.args.get('text', '')
+    user_text = raw_text.split(',')[-1].strip() if raw_text else None
     if user_text:
         print(f"=== הנתונים שהתקבלו מהמשתמש: {user_text} ===")
 
@@ -25,7 +26,7 @@ def webhook():
         )
         ai_answer = response.text.strip().replace('\n', ' ')
         print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
-        response_text = f"read=t-{ai_answer} כעת, האם תרצה לשאול שאלה נוספת? אנא הקלט לאחר הצליל ובסיום הקש סולמית=text,,voice,max_time=60,timeout=10,no_say_recording=yes"
+        response_text = f"read=t-{ai_answer}. כעת, האם תרצה לשאול שאלה נוספת? אנא הקלט לאחר הצליל ובסיום הקש סולמית=text,,voice,max_time=60,timeout=10,no_say_recording=yes"
         gc.collect()
         
         return Response(response_text, mimetype='text/plain; charset=utf-8')
