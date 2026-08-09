@@ -23,7 +23,6 @@ def webhook():
     else:
         user_text = None
         
-    user_text = raw_text.split(',')[-1].strip() if raw_text else None
 
     # 2. טיפול בפנייה המכילה שאלה מהמשתמש
     if user_text:
