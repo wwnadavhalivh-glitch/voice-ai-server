@@ -31,7 +31,7 @@ def webhook():
         
         # שליחת השאלה לג'מיני
         response = client.models.generate_content(
-            model='models/gemini-2.5-flash',
+            model='models/gemini-3.5-flash',
             contents=f"ענה בעברית פשוטה ובלי סמלים מיוחדים, בלי נקודות, כוכביות או אנגלית, ותשיב רק פסיקים על השאלה הבאה: {user_text}"
         )
         
