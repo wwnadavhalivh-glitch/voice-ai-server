@@ -25,7 +25,7 @@ def webhook():
         )
         ai_answer = response.text.strip().replace('\n', ' ')
         print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
-        response_text = f"id_list_message=t-{ai_answer}&hangup=yes"
+        response_text = f"read=t-{ai_answer} כעת, האם תרצה לשאול שאלה נוספת? אנא הקלט לאחר הצליל ובסיום הקש סולמית=text,,voice,max_time=60,timeout=10,no_say_recording=yes"
         gc.collect()
         
         return Response(response_text, mimetype='text/plain; charset=utf-8')
@@ -34,7 +34,7 @@ def webhook():
     # שליחת הפקודות מופרדות בירידת שורה (\n):
     # 1. השמעת הטקסט בפורמט t-
     # 2. מעבר מידי לפקודת הקלטה וקליטת טקסט מהמשתמש
-        response_text = "read=t-אנא הקלט את הודעתך לאחר הצליל ובסיום הקש סולמית=text,,voice,max_time=60,timeout=10,no_say_recording=yes"
+        response_text = "read=t-שלום, אנא הקלט את הודעתך לאחר הצליל ובסיום הקש סולמית=text,,voice,max_time=60,timeout=10,no_say_recording=yes"
         gc.collect()
         return Response(response_text, mimetype='text/plain; charset=utf-8')
 
