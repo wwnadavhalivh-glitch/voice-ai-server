@@ -28,7 +28,7 @@ def webhook():
     if user_text:
         print(f"=== הנתונים שהתקבלו מהמשתמש: {user_text} ===")
         
-        # שליחת השאלה לג'מיני
+    try:     # שליחת השאלה לג'מיני
         response = client.models.generate_content(
             model='models/gemini-3.5-flash',
             contents=f"ענה בעברית פשוטה ובלי סמלים מיוחדים, בלי נקודות, כוכביות או אנגלית, ותשיב רק פסיקים על השאלה הבאה: {user_text}"
@@ -37,7 +37,7 @@ def webhook():
         # ניקוי ירידות שורה וגרשיים מהתשובה כדי למנוע תקלות בפענוח
         ai_answer = response.text.strip().replace('\n', ' ').replace('"', '').replace("'", '')
         print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
-
+        ai_answer = "מצטער המערכת עמוסה כרגע אנא נסה לשאול שוב בעוד מספר שניות"
         # יצירת שם משתנה דינמי ייחודי המונע קונפליקטים בימות המשיח
         var_name = f"text_{int(time.time())}"
         
