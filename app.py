@@ -26,7 +26,7 @@ def webhook():
         )
         ai_answer = response.text.strip().replace('\n', ' ')
         print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
-        response_text = f"read=t-{ai_answer}. כעת, האם תרצה לשאול שאלה נוספת? אנא הקלט לאחר הצליל ובסיום הקש סולמית=text,,voice,max_time=60,timeout=10,no_say_recording=yes"
+        response_text = f"id_list_message=t-{ai_answer}&read=t-כעת, האם תרצה לשאול שאלה נוספת? אנא הקלט לאחר הצליל ובסיום הקש סולמית=text,voice,60,10,1,10,no,yes,yes,no"
         gc.collect()
         
         return Response(response_text, mimetype='text/plain; charset=utf-8')
