@@ -25,23 +25,25 @@ def webhook():
         
 
     # 2. טיפול בפנייה המכילה שאלה מהמשתמש
+    # 2. טיפול בפנייה המכילה שאלה מהמשתמש
     if user_text:
         print(f"=== הנתונים שהתקבלו מהמשתמש: {user_text} ===")
         
-    try:     # שליחת השאלה לג'מיני
-        response = client.models.generate_content(
-            model='models/gemini-3.5-flash',
-            contents=f"ענה בעברית פשוטה ובלי סמלים מיוחדים, בלי נקודות, כוכביות או אנגלית, ותשיב רק פסיקים על השאלה הבאה: {user_text}"
-        )
-        
-        # ניקוי ירידות שורה וגרשיים מהתשובה כדי למנוע תקלות בפענוח
-        ai_answer = response.text.strip().replace('\n', ' ').replace('"', '').replace("'", '')
-        print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
-        ai_answer = "מצטער המערכת עמוסה כרגע אנא נסה לשאול שוב בעוד מספר שניות"
+        try:
+            response = client.models.generate_content(
+                model='models/gemini-3.5-flash',
+                contents=f"ענה בעברית פשוטה ובלי סמלים מיוחדים, בלי נקודות, כוכביות או אנגלית, ותשיב רק פסיקים על השאלה הבאה: {user_text}"
+            )
+            ai_answer = response.text.strip().replace('\n', ' ').replace('"', '').replace("'", '')
+            print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
+        except Exception as e:
+            print(f"=== שגיאה בפנייה לג'מיני: {e} ===")
+            ai_answer = "מצטער המערכת עמוסה כרגע אנא נסה לשאול שוב בעוד מספר שניות"
+
         # יצירת שם משתנה דינמי ייחודי המונע קונפליקטים בימות המשיח
         var_name = f"text_{int(time.time())}"
         
-        # הרכבת פקודת ה-read הנקייה
+        # הרכבת פקודת ה-read
         response_text = f"read=t-{ai_answer} כעת אנא הקלט את שאלתך הבאה לאחר הצליל ובסיום הקש סולמית={var_name},,voice"
         
         gc.collect()
