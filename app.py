@@ -57,7 +57,7 @@ def webhook():
 
   else:
     # ברירת מחדל: שליחת המקלדת והקלטת קול
-    response_text = "read=t=אנא הקלט את הודעתך לאחר הצליל ובסיום הקש סולמית=no_say_recording=yes"
+    response_text = "read=t=אנא הקלט את הודעתך לאחר הצליל ובסיום הקש סולמית=text,,voice,no_say_recording=yes"
     gc.collect()
     return Response(response_text, mimetype="text/plain; charset=utf-8")
 
