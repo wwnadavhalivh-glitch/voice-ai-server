@@ -1,32 +1,46 @@
+import gc
 import os
-from flask import Flask, request, Response
-
+from flask import Flask, Response, request
+from google import genai
 app = Flask(__name__)
-
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    return "OK"
+api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY_1") or os.environ.get("GEMINI_API_KEY_2")
+client = genai.Client(api_key=api_key)
 
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
-    print("--- פנייה התקבלה מהמערכת ---")
+    print("--- קבלה פניה חדשה ממוקד הטלפוניה ---")
+    print(f"Args (GET): {request.args.to_dict()}")
     
-    # מקרה 1: המשתמש סיים להקליט והקובץ הגיע לשרת
-    if 'UploadFile' in request.files:
-        audio_file = request.files['UploadFile']
-        audio_file.save("user_recording.wav")
-        print("קובץ השמע התקבל ונשמר בהצלחה!")
-        
-        # השמעת הודעת תודה וניתוק
-        return Response("play_and_get_audio=M1211&hangup=yes", mimetype='text/plain')
+    # בדיקה האם הגיעו נתונים מהמשתמש (הטקסט שהוקלט והומר)
+    user_text = request.args.get('text')
+    if user_text:
+        print(f"=== הנתונים שהתקבלו מהמשתמש: {user_text} ===")
 
-    # מקרה 2: כניסה ראשונית - עדיין אין קובץ, לכן מורים למערכת להקליט
-    print("שולח פקודת הקלטה מובנית לשרת ימות המשיח...")
-    
-    # api_add_audio_record=yes מורה למערכת להשמיע את הודעת ההקלטה M0000,
-    # להשמיע ביפ, לקלוט הקלטה, ורק כשהמשתמש מקיש # לשלוח אותה בחזרה ל-API.
-    response_text = "api_add_audio_record=yes"
-    return Response(response_text, mimetype='text/plain')
+       
+        # שליחת הטקסט לג'מיני
+        response = client.models.generate_content(
+            model='models/gemini-3.5-flash',
+            contents=f"ענה בעברית פשוטה ובלי סמלים מיוחדים, וגם בלי נקודות, כוכביות או אנגלית, ותוסיף רק פסיקים על השאלה הבאה: {user_text}",
+            
+        )
+        ai_answer = response.text.strip().replace('\n', ' ')
+        print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
+        response_text = f"id_list_message=t-{ai_answer}&hangup=yes"
+        gc.collect()
+        
+        return Response(response_text, mimetype='text/plain; charset=utf-8')
+        
+    else:
+    # שליחת הפקודות מופרדות בירידת שורה (\n):
+    # 1. השמעת הטקסט בפורמט t-
+    # 2. מעבר מידי לפקודת הקלטה וקליטת טקסט מהמשתמש
+        response_text = "read=t-אנא הקלט את הודעתך לאחר הצליל ובסיום הקש סולמית=text,,voice,no_say_recording=yes"
+        gc.collect()
+        return Response(response_text, mimetype='text/plain; charset=utf-8')
+
+@app.route('/')
+def home():
+    return Response("השרת פעיל", mimetype='text/plain; charset=utf-8')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
