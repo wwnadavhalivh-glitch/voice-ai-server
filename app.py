@@ -19,10 +19,10 @@ def webhook():
     text_values = [v for k, v in request.args.items() if k.startswith('text')]
     if text_values:
         raw_text = str(text_values[-1])
+        user_text = raw_text.split(',')[-1].strip() if raw_text else None
     else:
-        args_list = list(request.args.values())
-        raw_text = str(args_list[-1]) if args_list else ''
-
+        user_text = None
+        
     user_text = raw_text.split(',')[-1].strip() if raw_text else None
 
     # 2. טיפול בפנייה המכילה שאלה מהמשתמש
