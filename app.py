@@ -32,7 +32,7 @@ def webhook():
         try:
             response = client.models.generate_content(
                 model='models/gemini-3.5-flash',
-                contents=f"ענה בעברית פשוטה ובלי סמלים מיוחדים, בלי נקודות, כוכביות או אנגלית, ותשיב רק פסיקים על השאלה הבאה: {user_text}"
+                config={"system_instruction": "אתה עוזר קולי חכם, ענה בקצרה ולעניין למענה קולי בלבד."}
             )
             ai_answer = response.text.strip().replace('\n', ' ').replace('"', '').replace("'", '')
             print(f"=== התקבלה תשובה מג'מיני: {ai_answer} ===")
@@ -44,7 +44,7 @@ def webhook():
         var_name = f"text_{int(time.time())}"
         
         # הרכבת פקודת ה-read
-        response_text = f"read=t-{ai_answer} כעת אנא הקלט את שאלתך הבאה לאחר הצליל ובסיום הקש סולמית={var_name},,voice"
+        response_text = f"read=t-{ai_answer} כעת אנא הקלט את שאלתך הבאה לאחר הצליל ובסיום הקש סולמית{var_name}=text,,voice"
         
         gc.collect()
         return Response(response_text, mimetype='text/plain; charset=utf-8')
